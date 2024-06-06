@@ -33,7 +33,8 @@
                 <el-header>节点配置</el-header>
                 <el-main>
                     <el-form ref="curConfig" :model="curConfig" label-width="80px">
-                        <el-form-item v-for="item in configItems" :key="item.id" :label="item.label" :value="item.value">
+                        <el-form-item v-for="item in configItems" :key="item.id" :label="item.label"
+                            :value="item.value">
                             <el-input v-model="curConfig[item.value]"></el-input>
                         </el-form-item>
                     </el-form>
@@ -51,7 +52,7 @@
                 <el-button @click="generateVNode">生成虚拟节点代码</el-button>
                 <el-main>
                     {{ generatedCode }}
-                    <hr/>
+                    <hr />
                     <p>预览</p>
                     <div ref="preview">
                         <span id="testId" class="testClass">hello, lowcode.
@@ -62,35 +63,39 @@
                             <span id="testId" class="testClass" style="color:red">child 2</span>
                             <el-input class="single-input" v-model="inputValue"></el-input>
                         </span>
+                        <div id="container" class="container">
+                            <el-input class="single-input" v-model="$inputValue"></el-input>
+                            <el-input class="single-input" v-model="$inputValue"></el-input>
+                        </div>
                     </div>
                 </el-main>
             </el-container>
         </div>
-                <el-dialog class="create-dialog" v-model="createVisible" title="创建" width="40%">
-                    <el-form ref="createDialog" :model="curConfig" label-width="80px">
-                        <el-form-item prop="label" label="节点名">
-                            <el-select v-model="newNodeType">
-                                <el-option v-for="item in availableComponentsList" :key="item.id" :label="item"
-                                    :value="item"></el-option>
-                            </el-select>
-                        </el-form-item>
-                        <!-- <el-form-item prop="text" label="文本">
+        <el-dialog class="create-dialog" v-model="createVisible" title="创建" width="40%">
+            <el-form ref="createDialog" :model="curConfig" label-width="80px">
+                <el-form-item prop="label" label="节点名">
+                    <el-select v-model="newNodeType">
+                        <el-option v-for="item in availableComponentsList" :key="item.id" :label="item"
+                            :value="item"></el-option>
+                    </el-select>
+                </el-form-item>
+                <!-- <el-form-item prop="text" label="文本">
                     <el-input v-model="curConfig.data.text"></el-input>
                 </el-form-item> -->
-                        <!-- <el-form-item v-for="(value, index) in curConfig.data.attrs" :key="index" :label="value">
+                <!-- <el-form-item v-for="(value, index) in curConfig.data.attrs" :key="index" :label="value">
                     <el-input v-model="curConfig.data.attrs[value]"></el-input>
                 </el-form-item> -->
-                        <el-button @click.prevent="appendProp(domain)"><i
-                                class="el-icon-circle-plus-outline"></i>新增属性</el-button>
-                    </el-form>
-                    <template #footer>
-                        <span class="dialog-footer">
-                            <el-button @click="() => createVisible = false">取 消</el-button>
-                            <el-button type="primary" @click="() => append()">确 定</el-button>
-                        </span>
-                    </template>
-                </el-dialog>
-        </div>
+                <el-button @click.prevent="appendProp(domain)"><i
+                        class="el-icon-circle-plus-outline"></i>新增属性</el-button>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="() => createVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="() => append()">确 定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+    </div>
 </template>
 
 <script setup>
