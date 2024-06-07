@@ -32,15 +32,15 @@
             <el-container>
                 <el-header>节点配置</el-header>
                 <el-main>
-                    <el-form ref="curConfig" :model="curConfig" label-width="80px">
+                    <!-- <el-form ref="tmpConfig" :model="tmpConfig" label-width="80px">
                         <el-form-item v-for="item in configItems" :key="item.id" :label="item.label"
                             :value="item.value">
-                            <el-input v-model="curConfig[item.value]"></el-input>
+                            <el-input v-model="tmpConfig[item.value]"></el-input>
                         </el-form-item>
-                    </el-form>
+                    </el-form> -->
                     <div style="float:right">
                         <el-button @click="cancelChange">取 消</el-button>
-                        <el-button type="primary" @click="changeOptions(curConfig)">确 定</el-button>
+                        <el-button type="primary" @click="changeOptions(tmpConfig)">确 定</el-button>
                     </div>
                 </el-main>
             </el-container>
@@ -63,28 +63,24 @@
                             <span id="testId" class="testClass" style="color:red">child 2</span>
                             <el-input class="single-input" v-model="inputValue"></el-input>
                         </span>
-                        <div id="container" class="container">
-                            <el-input class="single-input" v-model="$inputValue"></el-input>
-                            <el-input class="single-input" v-model="$inputValue"></el-input>
-                        </div>
                     </div>
                 </el-main>
             </el-container>
         </div>
         <el-dialog class="create-dialog" v-model="createVisible" title="创建" width="40%">
-            <el-form ref="createDialog" :model="curConfig" label-width="80px">
+            <el-form ref="createDialog" :model="tmpConfig" label-width="80px">
                 <el-form-item prop="label" label="节点名">
                     <el-select v-model="newNodeType">
-                        <el-option v-for="item in availableComponentsList" :key="item.id" :label="item"
+                        <el-option v-for="item in availableComponentsList" :key="item" :label="item"
                             :value="item"></el-option>
                     </el-select>
                 </el-form-item>
-                <!-- <el-form-item prop="text" label="文本">
-                    <el-input v-model="curConfig.data.text"></el-input>
-                </el-form-item> -->
-                <!-- <el-form-item v-for="(value, index) in curConfig.data.attrs" :key="index" :label="value">
-                    <el-input v-model="curConfig.data.attrs[value]"></el-input>
-                </el-form-item> -->
+                <template v-if="newNodeType">
+                    <div v-for="key in Object.keys(tmpConfig.data.attrs)" :key="key" :label="key">
+                        <!-- <el-input v-model="tmpConfig.data.attrs[key]" clearable></el-input> -->
+                        <span>{{ key }}: {{ tmpConfig.data.attrs[key] }}</span>
+                    </div>
+                </template>
                 <el-button @click.prevent="appendProp(domain)"><i
                         class="el-icon-circle-plus-outline"></i>新增属性</el-button>
             </el-form>
@@ -100,7 +96,7 @@
 
 <script setup>
 import componentsConfigMap from '@/materials/componentsConfig.js'
-import { ref, reactive, computed, h } from 'vue'
+import { ref, reactive, computed, watch, nextTick, h } from 'vue'
 import '@/assets/lowcodeHelper.css'
 //配置字段
     const configItems = [
@@ -111,14 +107,14 @@ import '@/assets/lowcodeHelper.css'
     { value: 'text', label: 'text' }, // 节点文本
     // { value: 'elm', label: 'elm' }, // 真实节点
     ]
-    const newNodeType = ref('')
-    //当前点击的节点 ps:不一定跟curConfig完全对应。
+    const newNodeType = ref(undefined)
+    //当前点击的节点 ps:不一定跟curConfig完全对应,取决于操作，新增子节点的curNode是父节点，编辑的curNode是当前节点。
     const curNode = ref({
         node: {},
         data: {},
     })
     // 节点配置临时数据
-    let curConfig = ref({
+    let tmpConfig = ref({
         parentKey: '',
         key: '',
         label: '',
@@ -127,7 +123,8 @@ import '@/assets/lowcodeHelper.css'
                 'id': ''
             },
             text: ''
-        }
+        },
+        children: []
     })
     // 页面结构树
     let vnodeTree = ref([{
@@ -216,12 +213,28 @@ let availableComponentsList = computed(() => {
     // console.log('this.componentsConfigMap: ', componentsConfigMap);
     return Object.keys(componentsConfigMap)
 })
-function appendProp() { }
+watch(newNodeType, (nv,ov) => {
+    try{
+        console.log('nv,ov', nv,ov)
+        if(nv) {
+            let vnode = componentsConfigMap[newNodeType.value]
+            console.log('vnode: ', vnode, newNodeType.value);
+            tmpConfig.value = JSON.parse(JSON.stringify(vnode))
+            tmpConfig.value.key = Date.now()
+            console.log('vnode', vnode, 'tmpConfig.value', tmpConfig.value)
+            // newNodeType = nv
+            // await nextTick()
+        }
+    }catch(e){
+        console.log('e', e)
+    }
+})
+function appendProp() {}
 function createChildNode(node, data) {
     console.log('data', node, data)
     curNode.value.node = node
     curNode.value.data = data
-    curConfig.value = {
+    tmpConfig.value = {
         parentKey: '',
         key: '',
         label: '',
@@ -230,23 +243,20 @@ function createChildNode(node, data) {
                 'id': ''
             },
             text: ''
-        }
+        },
+        children: []
     }
-    curConfig.value.parentKey = data.key
+    tmpConfig.value.parentKey = data.key
     createVisible.value = true
 }
 function append(data) {
-    console.log('curConfig', curConfig.value)
+    console.log('tmpConfig', tmpConfig.value)
     console.log('newNodeType', newNodeType.value)
-    let vnode = componentsConfigMap[newNodeType.value]
-    curConfig.value = JSON.parse(JSON.stringify(vnode))
-    console.log('vnode', vnode, 'curConfig.value', curConfig.value)
-    curConfig.value.key = Date.now()
     // const newChild = { label: 'testtest', children: [] }
     if (!curNode.value.data.children) {
         curNode.value.data['children'] = []
     }
-    curNode.value.data.children.push(curConfig.value)
+    curNode.value.data.children.push(tmpConfig.value)
     console.log('vnodeTree.value', vnodeTree.value)
     createVisible.value = false
 }
@@ -276,7 +286,7 @@ function changeOptions(data) {
     console.log('data', data)
 }
 function cancelChange() {
-    // curConfig.value = 
+    // tmpConfig.value = 
 }
 
 </script>
