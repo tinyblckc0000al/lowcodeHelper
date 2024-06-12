@@ -1,45 +1,35 @@
-# lowcodeHelper
 
-This template should help get you started developing with Vue 3 in Vite.
+## v0
+不做图形拖拽渲染，通过配置把基础页面写出来，按模块大概分为三大块：页面结构，节点配置，代码展示。
+（其实感觉还是需要预设一个模板库选择，不过这个后面再优化）
+大概需要实现以下功能点：
+### 页面结构
+- [ ] ⭐ ~~新增节点~~ -> ~~弹窗展示~~ -> ~~选择组件，初始化配置~~ -> ~~点击确认，更新树结构~~ -> ~~删除节点~~（同） 
+- [ ] 点击节点代码()（优化：节点diff）
+- [x] 点击编辑在右侧节点配置处进行属性配置
 
-## Recommended IDE Setup
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Type Support for `.vue` Imports in TS
+### 节点配置
+- [x] 根据编辑的节点id，展示对应组件需要配置的属性
+- [ ] 预设组件
+	- [x] el-input
+	- [ ] el-select
+	- [ ] el-button
+	- [ ] el-form
+	- [ ] el-table
+	- [ ] el-pagination
+- [ ] 新增自定义props
+- [ ] 支持绑定回调
+- [ ] 支持绑定样式
+- [ ] 点击确定 -> 更新代码
+- [ ] 全局配置
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+### 代码展示
+- [x] 点击生成代码
+- [ ] 监听更新代码
+- [ ] 展示配置代码
+- [ ] 进一步优化为展示最终代码
+- [ ] 导出文件 ： 文件名
+- [ ] 添加注释
