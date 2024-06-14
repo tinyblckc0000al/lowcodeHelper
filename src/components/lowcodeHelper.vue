@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" style="width: 100%">
         <div style="width:30%;">
             <el-container>
                 <el-header>页面结构</el-header>
@@ -28,11 +28,11 @@
                 </el-main>
             </el-container>
         </div>
-        <div style="width:30%;">
+        <div style="width:40%;">
             <el-container>
                 <el-header>节点配置</el-header>
                 <el-main v-if="curNodeConfig != null">
-                    <el-form ref="curNodeConfigRef" :model="curNodeConfig" label-width="80px">
+                    <el-form ref="curNodeConfigRef" :model="curNodeConfig" label-width="150px">
                             <el-form-item prop="label" label="组件类型">
                                 <el-select v-model="curNodeConfig.label" clearable>
                                     <el-option v-for="item in availableComponentsList" :key="item" :label="item"
@@ -54,19 +54,21 @@
             <el-container>
                 <el-header>生成代码</el-header>
                 <el-button @click="generateCode">生成拼接代码</el-button>
-                <el-button @click="generateVNode">生成虚拟节点代码</el-button>
+                <el-button @click="generateVNode">测试script代码</el-button>
                 <el-main>
-                    {{ generatedCode }}
+                    <el-input v-model="generatedCode.template" type="textarea" size="small" :autosize="{minRows: 5, maxRows: 25}"></el-input>
+                    <el-input v-model="generatedCode.script" type="textarea" size="small" :autosize="{minRows: 5, maxRows: 25}"></el-input>
+                    {{  }}
                     <hr />
                     <p>预览</p>
                     <div ref="preview">
-
+                        <div id="container" class="container"></div>
                     </div>
                 </el-main>
             </el-container>
         </div>
-        <el-dialog class="create-dialog" v-model="createVisible" @closed="closeCreateChildNode" header="创建" width="40%">
-            <el-form ref="createDialogRef" :model="tmpConfig" label-width="80px">
+        <el-dialog class="create-dialog" v-model="createVisible" @closed="closeCreateChildNode" header="创建" width="35%">
+            <el-form ref="createDialogRef" :model="tmpConfig" label-width="150px">
                 <el-form-item prop="label" label="节点名">
                     <el-select v-model="newNodeType" clearable>
                         <el-option v-for="item in availableComponentsList" :key="item" :label="item"
@@ -102,6 +104,7 @@
 
 <script setup>
 import componentsConfigMap from '@/materials/componentsConfig.js'
+import vueRules, {ruleRegStart} from '@/materials/matchingRules.js'
 import { ref, reactive, computed, watch, nextTick, h } from 'vue'
 import '@/assets/lowcodeHelper.css'
 //配置字段
@@ -155,6 +158,7 @@ import '@/assets/lowcodeHelper.css'
     })
     // 控制新建节点弹窗
     let createVisible = ref(false)
+    const legalVariableReg = /^[$A-Z_][0-9A-Z_$]*$/i
 
 String.prototype.insertSubstr = function (index, str) {
     if (isNaN(index)) throw Error("Insertion index is not number type.");
@@ -181,12 +185,12 @@ function insertTemplate(template = '', vNodes = []) {
         let labelEnd = `</${tag}>`
         let childrenTemplate = ''
         if (children && children.length) childrenTemplate = insertTemplate(childrenTemplate, children)
-        console.log('parent: ', parent);
-        console.log('key: ', key);
-        // console.log('text: ', text);
-        console.log('tag: ', tag);
-        console.log('data: ', data);
-        console.log('children', children, childrenTemplate)
+        // console.log('parent: ', parent);
+        // console.log('key: ', key);
+        // // console.log('text: ', text);
+        // console.log('tag: ', tag);
+        // console.log('data: ', data);
+        // console.log('children', children, childrenTemplate)
         text = data.text
         for (let k in data.attrs) {
             if (['text'].includes(k)) continue
@@ -201,14 +205,26 @@ function insertTemplate(template = '', vNodes = []) {
     }
     return template
 }
-function insertScript(script = '', vNodes = []) {
+function insertScript(vNodes = [], scriptData = {}, scriptFunc = []) {
     if (!vNodes.length) return
     for (let cfg of vNodes) {
         const { children, data } = cfg
-        let childrenScript = ''
-        if (children && children.length) childrenScript = insertScript(childrenScript, children)
+        if (children && children.length) insertScript(children, scriptData, scriptFunc)
         for (let k in data.attrs) {
-            console.log('k,v', k, data.attrs[k])
+            //如果k符合pattern,则将value加入script的data{}中,
+            vueRules.attrs.forEach( r => {
+                // console.log('r', r)
+                console.log('ruleReg(r)',ruleRegStart(r))
+                if(k.match(ruleRegStart(r))) {
+                    if(!scriptData[data.attrs[k]]) {
+                        if(legalVariableReg.test(data.attrs[k])){
+                            scriptData[data.attrs[k]] = null
+                        }
+                    }
+                }
+            }
+        )
+            // console.log('k,v', k, data.attrs[k])
             // if(['text'].includes(k)) continue
             // let attrStr =  ` ${k}="${JSON.parse(JSON.stringify(data.attrs[k]))}"`
             // if(data.attrs[k]) {
@@ -216,6 +232,25 @@ function insertScript(script = '', vNodes = []) {
             // }
         }
     }
+}
+function generateScript(vNodes = [], script = '', scriptData = {}, scriptFunc = []) {
+    if (!vNodes.length) return
+    if(!script) script = 'export default {\n}'
+    insertScript(vNodes, scriptData, scriptFunc)
+    let dataStr = generateDataOfScript(scriptData)
+    // let FuncStr
+    script = script.insertSubstr(-2, dataStr+'\n')
+    console.log(script)
+    return script
+}
+function generateDataOfScript(data) {
+    let dataStr = JSON.parse(JSON.stringify(data))
+    console.log('data', data, dataStr)
+    let res = `data() {\n\treturn {\n}}`
+    for(let k in dataStr) {
+        res = res.insertSubstr(-3,`\t${k}: ${dataStr[k]}\n`)
+    }
+    return res
 }
 function insertVnode(tree, node, parentKey) {
 }
@@ -289,15 +324,17 @@ function generateCode() {
     // generatedCode.value.template = insertTemplate(generatedCode.value.template, [...vnodeTree.value])
     // let tmpNode = h(vnode.label,vnode.data,vnode.children)
     let tmpDom = insertTemplate(generatedCode.value.template, vnodeTree.value)
-    let tmpScript = insertScript(generatedCode.value.script, vnodeTree.value)
     generatedCode.value.template = tmpDom
-    generatedCode.value.script = tmpScript
-    this.$refs.preview.innerHTML = tmpDom
-    console.log('tmpNode', this.$refs.preview, tmpDom)
+    generatedCode.value.script = generateScript(vnodeTree.value,generatedCode.value.script)
+    // this.$refs.preview.innerHTML = tmpDom
+    // console.log('tmpNode', this.$refs.preview, tmpDom)
     // this.$refs.preview= generatedCode.value.template
 }
 function generateVNode() {
-    console.log('vnodeTree.value', vnodeTree.value)
+    // console.log('vnodeTree.value', vnodeTree.value)
+    generatedCode.value = { "template": "", "script": "", "style": "" }
+    let tmpScript = generateScript(vnodeTree.value, generatedCode.value.script)
+    console.log('tmpScript', tmpScript)
 }
 function changeNodeConfig(data) {
     const parent = curNode.value.parent
@@ -322,7 +359,7 @@ hr{
 }
 .dom-text::before {
     content:"innerText";
-    width:80px;
+    width:150px;
     text-align:right;
     padding-right: 10px;
 }

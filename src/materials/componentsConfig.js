@@ -3,10 +3,18 @@ const componentsConfigMap = {
         'label': 'el-input',
         'data': {
             'attrs': {
-                'class': 'single-input',
-                'v-model': '$inputValue'
+                ':class': 'singleInput',
+                'v-model': 'inputValue',
+                'type': 'textarea',
+                'maxlength': '500',
+                'size': 'small',
+                'placeholder': '请输入',
+                ':autosize': '{minRows: 5, maxRows: 25}',
+                'show-word-limit': true,
+                'v-on:mouseleave': 'console.log(\'hi\')'
             },
             'events': {
+                "@keyup": 'doSearch'
             }
         },
         'couldHaveChild': false,
@@ -18,6 +26,7 @@ const componentsConfigMap = {
             'attrs':{
                 'class': 'container',
             },
+
             'events' : {
                 'click': 'console.log(this)'
             }
